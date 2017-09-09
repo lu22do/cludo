@@ -1,5 +1,5 @@
-Meteor.subscribe('stuffs');
-Meteor.subscribe("userData");
+Meteor.subscribe('games');
+Meteor.subscribe('userData');
 
 Router.map(function(){
   this.onBeforeAction(function () {
@@ -18,23 +18,26 @@ Router.map(function(){
     this.render('main');
   });
 
-  this.route('/stuffs', function () {
-    this.render('stuffs');
-  });
-
-  this.route('/newstuff');
-
-  this.route('/editstuff/:_id', {
-    template: 'editstuff',
-    data: function(){
-      return Stuffs.findOne(this.params._id);
-    }
+  this.route('/games');
+  this.route('/newgame');
+  this.route('/editgame/:_id', function() {
+    this.render('editgame', {
+      data: {
+        gameId: this.params._id
+      }
+    });
   });
 
   this.route('/users');
-
   this.route('/register');
+
+  this.route('/activegame/:_id', function () {
+    this.render('activegame', {
+      data: {
+        gameId: this.params._id
+      }
+    });
+  });
+
+
 });
-
-
- 

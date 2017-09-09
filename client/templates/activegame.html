@@ -1,0 +1,152 @@
+<template name="activegame">
+  <div class="container">
+    <h3>"{{game.name}}" Game (turn #{{game.turn}})</h3>
+    <hr />
+    <h3>Player's turn:</h3>
+    <ol>
+      {{#each players}}
+      <li class="{{style}}">{{name}}</li>
+      {{/each}}
+    </ol>
+
+    <h3>Your cards:</h3>
+    <ul>
+      {{#each playerCards}}
+      <li>{{category}}: {{name}}</li>
+      {{/each}}
+    </ul>
+
+    {{#if remainingCards}}
+    <h3>Remaining card(s):</h3>
+    <ul>
+      {{#each remainingCards}}
+      <li>{{category}}: {{name}}</li>
+      {{/each}}
+    </ul>
+    {{/if}}
+
+    <hr />
+
+    {{#if myTurn}}
+    <button type="button" class="btn btn-default" data-toggle="modal" data-target="#ask-player-modal">
+       Ask a player
+    </button>
+
+    <button type="button" class="btn btn-default" data-toggle="modal" data-target="#guess-solution-modal">
+       Guess the solution
+    </button>
+    {{/if}}
+  </div>
+
+  {{> modal cards=cards title="Ask a player" id="ask-player-modal" gameId=gameId otherplayers=otherplayers}}
+  {{> modal cards=cards title="Guess the solution" id="guess-solution-modal" gameId=gameId}}
+
+  <div class="modal fade" id="notification-modal" tabindex="-1" role="dialog" data-backdrop="static">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Player request</h4>
+        </div>
+
+        <div class="modal-body">
+          {{curPlayerName}} asked {{askedPlayerName}} for:
+          <ul>
+            {{#each askedCardSet}}
+            <li>{{this}}</li>
+            {{/each}}
+          </ul>
+
+          {{#if waitingForAnswer}}
+
+            {{#if askedPlayerIsYou}}
+            <form id="{{id}}-form" action="action" data-id="{{gameId}}">
+              {{#if possibleCardsToAnswer}}
+              {{> select what="answer" items=possibleCardsToAnswer}}
+              {{/if}}
+
+              <div class="modal-footer">
+                <input class="btn btn-default" type="submit" id="answer-button" value="Answer" />
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+              </div>
+            </form>
+            {{else}}
+            <hr>
+            <div>
+              Waiting for answer...
+            </div>
+            {{/if}}
+
+          {{else}}
+            {{#if answerReceived}}
+
+              <hr>
+              <div>
+                {{askedPlayerName}} answered to {{curPlayerName}} with {{answer}} card.
+              </div>
+              <hr>
+
+              {{#if myTurn}}
+              <a class="btn btn-default" href="" id="next-turn" data-id="{{gameId}}">Next turn</a>
+              {{/if}}
+            {{/if}}
+
+          {{/if}}
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</template>
+
+<template name="modal">
+  <div class="modal fade" id="{{id}}" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title">{{title}}</h4>
+        </div>
+
+        <form id="{{id}}-form" action="action" data-id="{{gameId}}">
+          <div class="modal-body">
+
+            {{#if otherplayers}}
+            <div class="form-group">
+              <label for="player-selector">Select the player:</label>
+              <select class="form-control" id="player-selector">
+                {{#each otherplayers}}
+                <option data-id="{{id}}">{{name}}</option>
+                {{/each}}
+              </select>
+            </div>
+            {{/if}}
+
+            {{> select what="suspect" items=cards.suspects}}
+            {{> select what="room" items=cards.rooms}}
+            {{> select what="time" items=cards.times}}
+            {{> select what="weapon" items=cards.weapons}}
+
+          </div>
+          <div class="modal-footer">
+            <input class="btn btn-default" type="submit" id="update-button" value="{{title}}" />
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</template>
+
+<template name="select">
+  <div class="form-group">
+    <label for="{{what}}-selector">Select the {{what}}:</label>
+    <select class="form-control" id="{{what}}-selector">
+      {{#each items}}
+      <option data-id="{{@index}}">{{this}}</option>
+      {{/each}}
+    </select>
+  </div>
+</template>

@@ -1,0 +1,86 @@
+<template name="newgame">
+  <div class="container">
+    <h3>Create new game:</h3>
+    <form id="new-game-form" action="action">
+        <div class="form-group">
+          <label>Game name</label>
+          <input class="form-control" type="text" id="name"/>
+        </div>
+
+        <div class="form-group">
+          <label for="rules-selector">Select the rules:</label>
+          <select class="form-control" id="rules-selector">
+            {{#each possibleRules}}
+            <option data-id="{{@index}}">{{this}}</option>
+            {{/each}}
+          </select>
+        </div>
+
+        <input class="btn btn-default" type="submit" id="submit-button" value="Create"/>
+    </form>
+    </div>
+</template>
+
+<template name="editgame">
+  <div class="container">
+    <h3>Update this game:</h3>
+    <form id="edit-game-form" action="action" data-id="{{gameId}}">
+        <div class="form-group">
+          <label>Game name</label>
+          <input class="form-control" type="text" id="name" value="{{game.name}}"/>
+        </div>
+        <input class="btn btn-default" type="submit" id="update-button" value="Update"/>
+        <a class="btn btn-default" href="/games">Cancel</a>
+    </form>
+    </div>
+</template>
+
+<template name="games">
+  <div class="container">
+    <div>
+    {{#if gameCount}}
+    <h1>games:</h1>
+    <table class="table table-striped">
+      <thead>
+      <tr>
+        <th>Name</th>
+        <th>Rules</th>
+        <th>Players</th>
+        <th>State</th>
+        <th>Owner</th>
+        <th>Action</th>
+      </tr>
+      </thead>
+      <tbody>
+      {{#each games}}
+      <tr>
+        <td>{{name}}</td>
+        <td>{{rules}}</td>
+        <td>{{players}}</td>
+        <td>{{state}}</td>
+        <td>{{ownername}}</td>
+        <td>
+          {{#if canJoin}}
+            <a id="join-game" data-id="{{id}}" href="">Join</a>
+          {{/if}}
+          {{#if started}}
+            <a href="/activegame/{{id}}">Open</a>
+          {{/if}}
+          {{#if isMygame}}
+            {{#if startable}}
+              <a id="start-game" data-id="{{id}}" href="">Start</a>
+            {{/if}}
+            <a href="/editgame/{{id}}">Edit</a>
+            <a id="delete-game" data-id="{{id}}" href="">Delete</a>
+          {{/if}}
+        </td>
+      </tr>
+      {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    No games found
+    {{/if}}
+    </div>
+  </div>
+</template>

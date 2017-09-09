@@ -1,0 +1,280 @@
+Template.activegame.onCreated(function() {
+  this.autorun(() => {
+    let game = Games.findOne(Blaze.getData().gameId);
+    if (game && game.state !== STATE_DECIDING_ACTION) {
+      $('#notification-modal').modal('show');
+    }
+    else {
+      $('#notification-modal').modal('hide');
+    }
+  });
+
+  Meteor.call('game.getCards', Blaze.getData().gameId, function(err, result) {
+    Session.set('myCards', result);
+  });
+});
+
+Template.activegame.onRendered(() => {
+  // console.log(Blaze.getData());
+});
+
+function hasCard(type, index) {
+  let cards = Session.get('myCards');
+  for (let i = 0; i < cards.length; i++) {
+    if (cards[i].type == type && cards[i].index == index) {
+      return true;
+    }
+  }
+  return false;
+}
+
+Template.activegame.helpers({
+  game: function() {
+    return Games.findOne(this.gameId);
+  },
+  players: function() {
+    let game = Games.findOne(this.gameId);
+    if (game) {
+      let players = [];
+      game.players.forEach(function(playerId, index) {
+        if (playerId === Meteor.userId()) {
+          players.push({name: 'You'});
+        }
+        else {
+          players.push({name: Meteor.users.findOne(playerId).username});
+        }
+        if (index === game.curPlayer) {
+          players[players.length-1].style = 'currentPlayer';
+        }
+      });
+
+      return players;
+    }
+  },
+  myTurn: function() {
+    let game = Games.findOne(this.gameId);
+    if (game) {
+      let playerId = game.players[game.curPlayer];
+      if (playerId === Meteor.userId()) {
+        return true;
+      }
+    }
+    return false;
+  },
+  curPlayerName: function() {
+    let game = Games.findOne(this.gameId);
+    if (game) {
+      let playerId = game.players[game.curPlayer];
+      if (playerId === Meteor.userId()) {
+        return "You";
+      }
+      else {
+        return Meteor.users.findOne(playerId).username;
+      }
+    }
+  },
+  askedPlayerName: function() {
+    let game = Games.findOne(this.gameId);
+    if (game && game.curAskedPlayer) {
+      if (game.curAskedPlayer === Meteor.userId()) {
+        return "you";
+      }
+      else {
+        return Meteor.users.findOne(game.curAskedPlayer).username;
+      }
+    }
+  },
+  askedPlayerIsYou: function() {
+    let game = Games.findOne(this.gameId);
+    if (game && game.curAskedPlayer) {
+      if (game.curAskedPlayer === Meteor.userId()) {
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+  },
+  playerCards: function() {
+    return Session.get('myCards');
+  },
+  askedCardSet: function() {
+    let game = Games.findOne(this.gameId);
+    if (game && game.curAskedCardSet) {
+      return [SuspectCards[game.rules][game.curAskedCardSet.suspectIndex],
+              RoomCards[game.rules][game.curAskedCardSet.roomIndex],
+              TimeCards[game.rules][game.curAskedCardSet.timeIndex],
+              WeaponCards[game.rules][game.curAskedCardSet.weaponIndex]
+             ];
+    }
+  },
+  waitingForAnswer: function() {
+    let game = Games.findOne(this.gameId);
+    if (game && game.state === STATE_WAITING_ANSWER) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  },
+  answerReceived: function() {
+    let game = Games.findOne(this.gameId);
+    if (game && game.state === STATE_ANSWER_RECEIVED) {
+      ReactiveMethod.invalidateCall("game.getAnswer", {id: this.gameId});
+      return true;
+    }
+  },
+  answer: function() {
+    return ReactiveMethod.call('game.getAnswer', {id: this.gameId});
+  },
+  possibleCardsToAnswer: function() {
+    let game = Games.findOne(this.gameId);
+    if (game && game.curAskedCardSet) {
+      let cards = [];
+      let cardsToDisplay = [];
+
+      if (hasCard(CARD_TYPE_SUSPECT, game.curAskedCardSet.suspectIndex)) {
+        cards.push({type: CARD_TYPE_SUSPECT, index: game.curAskedCardSet.suspectIndex});
+        cardsToDisplay.push(SuspectCards[game.rules][game.curAskedCardSet.suspectIndex]);
+      }
+      if (hasCard(CARD_TYPE_ROOM, game.curAskedCardSet.roomIndex)) {
+        cards.push({type: CARD_TYPE_ROOM, index: game.curAskedCardSet.roomIndex});
+        cardsToDisplay.push(RoomCards[game.rules][game.curAskedCardSet.roomIndex]);
+      }
+      if (hasCard(CARD_TYPE_TIME, game.curAskedCardSet.timeIndex)) {
+        cards.push({type: CARD_TYPE_TIME, index: game.curAskedCardSet.timeIndex});
+        cardsToDisplay.push(TimeCards[game.rules][game.curAskedCardSet.timeIndex]);
+      }
+      if (hasCard(CARD_TYPE_WEAPON, game.curAskedCardSet.weaponIndex)) {
+        cards.push({type: CARD_TYPE_WEAPON, index: game.curAskedCardSet.weaponIndex});
+        cardsToDisplay.push(WeaponCards[game.rules][game.curAskedCardSet.weaponIndex]);
+      }
+
+      Session.set('possibleAnswerCards', cards);
+
+      return cardsToDisplay;
+    }
+  },
+  otherplayers: function() {
+    let game = Games.findOne(this.gameId);
+    if (game) {
+      let players = [];
+      game.players.forEach((playerId) => {
+        if (playerId !== Meteor.userId()) {
+          players.push({id: playerId,
+            name: Meteor.users.findOne(playerId).username});
+          }
+        });
+        return players;
+    }
+  },
+  remainingCards: function() {
+    let game = Games.findOne(this.gameId);
+    if (game) {
+      let cards = [];
+      game.remainingCards.forEach((card) => {
+        cards.push({category: CardCategories[card.type], name: AllCards[game.rules][card.type][card.index]});
+      });
+      return cards;
+    }
+  },
+  cards: function() {
+    let game = Games.findOne(this.gameId);
+    if (game) {
+      return {
+        suspects: SuspectCards[game.rules],
+        rooms: RoomCards[game.rules],
+        times: TimeCards[game.rules],
+        weapons: WeaponCards[game.rules]
+      }
+    }
+  }
+});
+
+Template.activegame.events({
+  'submit #ask-player-modal-form': function(e, t) {
+    e.preventDefault();
+    $('#ask-player-modal').modal('hide')
+
+    var id = e.target.getAttribute('data-id');
+    var playerId = t.find('#player-selector option:selected').getAttribute('data-id');
+    var suspectIndex = t.find('#ask-player-modal #suspect-selector option:selected').getAttribute('data-id');
+    var roomIndex = t.find('#ask-player-modal #room-selector option:selected').getAttribute('data-id');
+    var timeIndex = t.find('#ask-player-modal #time-selector option:selected').getAttribute('data-id');
+    var weaponIndex = t.find('#ask-player-modal #weapon-selector option:selected').getAttribute('data-id');
+
+    Meteor.call('game.askPlayer', {id, playerId, cardSet: {suspectIndex: parseInt(suspectIndex),
+                                                           roomIndex: parseInt(roomIndex),
+                                                           timeIndex: parseInt(timeIndex),
+                                                           weaponIndex: parseInt(weaponIndex)}},
+                function(err) {
+      if (err) {
+        alert('Could not ask player ' + err);
+      }
+      else {
+        // alert('Player asked successfully');
+      }
+    });
+
+    return false;
+  },
+  'submit #guess-solution-modal-form': function(e, t) {
+    e.preventDefault();
+    $('#guess-solution-modal').modal('hide')
+
+    var id = e.target.getAttribute('data-id');
+    var suspectIndex = t.find('#guess-solution-modal #suspect-selector option:selected').getAttribute('data-id');
+    var roomIndex = t.find('#guess-solution-modal #room-selector option:selected').getAttribute('data-id');
+    var timeIndex = t.find('#guess-solution-modal #time-selector option:selected').getAttribute('data-id');
+    var weaponIndex = t.find('#guess-solution-modal #weapon-selector option:selected').getAttribute('data-id');
+
+    Meteor.call('game.guessSolution', {id, cardSet: {suspectIndex: parseInt(suspectIndex),
+                                                     roomIndex: parseInt(roomIndex),
+                                                     timeIndex: parseInt(timeIndex),
+                                                     weaponIndex: parseInt(weaponIndex)}},
+                function(err, result) {
+      if (err) {
+        alert('Could not guess solution ' + err);
+      }
+      else {
+        if (result) {
+          alert('You guess correctly! Party is finished.');
+        }
+        else {
+          alert('You did not guess correctly!');
+        }
+      }
+    });
+
+    return false;
+  },
+  'submit #notification-modal': function(e, t) {
+    e.preventDefault();
+
+    let id = e.target.getAttribute('data-id');
+    let possibleAnswerCards = Session.get('possibleAnswerCards');
+    var cardIndex = t.find('#answer-selector option:selected').getAttribute('data-id');
+
+    let card = possibleAnswerCards[cardIndex];
+    Session.set('possibleAnswerCards', undefined);
+
+    Meteor.call('game.answer', {id, card},
+                function(err) {
+      if (err) {
+        alert('Could not answer ' + err);
+      }
+      else {
+        // alert('Player asked successfully');
+      }
+    });
+
+    return false;
+  },
+  'click #next-turn': function(e) {
+    e.preventDefault();
+    $('#notification-modal').modal('hide')
+    let id = e.target.getAttribute('data-id');
+    Meteor.call('game.nextTurn', {id});
+    return false;
+  }
+});
