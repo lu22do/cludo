@@ -28,6 +28,7 @@ Template.games.helpers({
               ownername: owner ? owner.username : 'unknown',
               canJoin: !game.started && !alreadyJoined,
               started: game.started && !game.finished,
+              notStarted: !game.started,
               startable: !game.started && (game.players.length >= 2),
               isMygame: isMygame};
     });

@@ -118,6 +118,11 @@ Meteor.methods({
       console.log('* ' + AllCards[game.rules][card.type][card.index]);
     });
 
+    let retiredPlayers = [];
+    game.players.forEach((playerId, index) => {
+      retiredPlayers[index] = false;
+    });
+
     GameDetails.insert({ cardsPerPlayer: cardsPerPlayer,
                          solutionCards: solutionCards
                        }, function(err, gameDetailsId) {
@@ -128,6 +133,7 @@ Meteor.methods({
       Games.update(id, { '$set': { 'started': new Date(),
                                    'turn': 1,
                                    'curPlayer': 0,
+                                   'retiredPlayers': retiredPlayers,
                                    'state': STATE_DECIDING_ACTION,
                                    'remainingCards': cards,
                                    'gameDetails': gameDetailsId
@@ -144,7 +150,7 @@ Meteor.methods({
     });
   },
   'game.getCards'(id) {
-    console.log('game.getCards gameId=' + id + ' userId=' + Meteor.users.findOne(this.userId).username);
+    console.log('game.getCards gameId=' + id + ' user=' + Meteor.users.findOne(this.userId).username);
     let game = Games.findOne(id);
     if (game) {
       let gameDetails = GameDetails.findOne(game.gameDetails);
@@ -163,7 +169,7 @@ Meteor.methods({
     }
   },
   'game.askPlayer'(args) {
-    console.log('game.askPlayer gameId=' + args.id + ' userId=' + Meteor.users.findOne(this.userId).username);
+    console.log('game.askPlayer gameId=' + args.id + ' user=' + Meteor.users.findOne(this.userId).username);
 
     let game = Games.findOne(args.id);
     if (this.userId !== game.players[game.curPlayer]) {
@@ -188,7 +194,7 @@ Meteor.methods({
                                       'state': nextState } });
   },
   'game.answer'(args) {
-    console.log('game.answer gameId=' + args.id + ' userId=' + Meteor.users.findOne(this.userId).username);
+    console.log('game.answer gameId=' + args.id + ' user=' + Meteor.users.findOne(this.userId).username);
 
     let game = Games.findOne(args.id);
 
@@ -208,7 +214,7 @@ Meteor.methods({
     });
   },
   'game.getAnswer'(args) {
-    console.log('game.getAnswer gameId=' + args.id + ' userId=' + Meteor.users.findOne(this.userId).username);
+    console.log('game.getAnswer gameId=' + args.id + ' user=' + Meteor.users.findOne(this.userId).username);
 
     let game = Games.findOne(args.id);
 
@@ -238,7 +244,8 @@ Meteor.methods({
 
     let game = Games.findOne(args.id);
 
-    if (game.state != STATE_ANSWER_RECEIVED) {
+    if (game.state != STATE_ANSWER_RECEIVED &&
+        game.state != STATE_SOLUTION_GUESSED) {
       throw new Meteor.Error('wrong-state',
                              'Next turn can only be done after getting answer');
     }
@@ -247,7 +254,18 @@ Meteor.methods({
     if (game.curPlayer === game.players.length - 1) {
       turn++;
     }
-    let curPlayer = (game.curPlayer + 1) % game.players.length;
+
+    // go to next player but skip the retired ones
+    let curPlayer = game.curPlayer;
+    do {
+      curPlayer = (curPlayer + 1) % game.players.length;
+    } while (game.retiredPlayers[curPlayer]);
+
+    if (curPlayer === game.curPlayer) {
+      throw new Meteor.Error('something-wrong',
+                             'Single player left!');
+    }
+
     GameDetails.update(game.gameDetails,
                        { '$unset': { 'lastAnswer': '' } },
                        function(err) {
@@ -262,7 +280,7 @@ Meteor.methods({
                        });
   },
   'game.guessSolution'(args) {
-    console.log('game.guessSolution gameId=' + args.id + ' userId=' + Meteor.users.findOne(this.userId).username);
+    console.log('game.guessSolution gameId=' + args.id + ' user=' + Meteor.users.findOne(this.userId).username);
 
     let game = Games.findOne(args.id);
     if (this.userId !== game.players[game.curPlayer]) {
@@ -277,15 +295,45 @@ Meteor.methods({
 
     let gameDetails = GameDetails.findOne(game.gameDetails);
 
+    let winner;
+    let guessedCardSet;
     if (args.cardSet.suspectIndex == gameDetails.solutionCards.suspectIndex &&
         args.cardSet.roomIndex == gameDetails.solutionCards.roomIndex &&
         args.cardSet.timeIndex == gameDetails.solutionCards.timeIndex &&
         args.cardSet.weaponIndex == gameDetails.solutionCards.weaponIndex) {
-      Games.update(args.id, { '$set': { 'finished': new Date() } });
-      return true;
-    } else {
-      return false;
+      winner = game.players[game.curPlayer];
+      guessedCardSet = args.cardSet;
+    }
+    else {
+      game.retiredPlayers[game.curPlayer] = true;
+
+      let activePlayerNb = 0;
+      let lastActivePlayerIndex;
+      game.retiredPlayers.forEach((value, index) => {
+        if (value === false) {
+          activePlayerNb++;
+          lastActivePlayerIndex = index;
+        }
+      });
+
+      if (activePlayerNb == 0) {
+        throw new Meteor.Error('wrong-player-nb','');
+      }
+      else if (activePlayerNb == 1) {
+        winner = game.players[lastActivePlayerIndex];
+      }
     }
 
+    if (winner) {
+      Games.update(args.id, { '$set': { 'finished': new Date(),
+                                        'winner': winner,
+                                        'guessedCardSet': guessedCardSet,
+                                        'state': STATE_SOLUTION_GUESSED } });
+      return true;
+    } else {
+      Games.update(args.id, { '$set': { retiredPlayers : game.retiredPlayers,
+                                        'state': STATE_SOLUTION_GUESSED } });
+      return false;
+    }
   }
 });

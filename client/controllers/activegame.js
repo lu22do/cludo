@@ -1,17 +1,35 @@
 Template.activegame.onCreated(function() {
   this.autorun(() => {
+    let gameId = Blaze.getData().gameId;
     let game = Games.findOne(Blaze.getData().gameId);
-    if (game && game.state !== STATE_DECIDING_ACTION) {
-      $('#notification-modal').modal('show');
-    }
-    else {
-      $('#notification-modal').modal('hide');
+    if (game) {
+      if (game.state == STATE_WAITING_ANSWER ||
+          game.state == STATE_ANSWER_RECEIVED) {
+        $('#notification-modal').modal('show');
+      }
+      else {
+        $('#notification-modal').modal('hide');
+      }
+
+      if (game.state == STATE_SOLUTION_GUESSED) {
+        $('#solution-guessed-modal').on('hidden.bs.modal', function (event) {
+          let game = Games.findOne(gameId);
+          if (game && game.finished) {
+            Router.go('/');
+          }
+        }).modal('show');
+      }
+      else {
+        $('#solution-guessed-modal').modal('hide');
+      }
+
     }
   });
 
   Meteor.call('game.getCards', Blaze.getData().gameId, function(err, result) {
     Session.set('myCards', result);
   });
+
 });
 
 Template.activegame.onRendered(() => {
@@ -45,6 +63,9 @@ Template.activegame.helpers({
         }
         if (index === game.curPlayer) {
           players[players.length-1].style = 'currentPlayer';
+        }
+        if (game.retiredPlayers[index]) {
+          players[players.length-1].style = 'retiredPlayer';
         }
       });
 
@@ -188,7 +209,36 @@ Template.activegame.helpers({
         weapons: WeaponCards[game.rules]
       }
     }
-  }
+  },
+  curPlayerWon: function() {
+    let game = Games.findOne(this.gameId);
+    if (game && game.finished && game.winner === game.players[game.curPlayer]) {
+      return true;
+    }
+  },
+  guessedCardSet: function() {
+    let game = Games.findOne(this.gameId);
+    if (game) {
+      let cardsToDisplay = [];
+      cardsToDisplay.push(SuspectCards[game.rules][game.guessedCardSet.suspectIndex]);
+      cardsToDisplay.push(RoomCards[game.rules][game.guessedCardSet.roomIndex]);
+      cardsToDisplay.push(TimeCards[game.rules][game.guessedCardSet.timeIndex]);
+      cardsToDisplay.push(WeaponCards[game.rules][game.guessedCardSet.weaponIndex]);
+      return cardsToDisplay;
+    }
+  },
+  winner: function() {
+    let game = Games.findOne(this.gameId);
+    if (game && game.winner) {
+      return Meteor.users.findOne(game.winner).username;
+    }
+  },
+  youAreTheWinner: function() {
+    let game = Games.findOne(this.gameId);
+    if (game && game.winner && game.winner === Meteor.userId()) {
+      return true;
+    }
+  },
 });
 
 Template.activegame.events({
@@ -237,12 +287,12 @@ Template.activegame.events({
         alert('Could not guess solution ' + err);
       }
       else {
-        if (result) {
-          alert('You guess correctly! Party is finished.');
-        }
-        else {
-          alert('You did not guess correctly!');
-        }
+        // if (result) {
+        //   alert('You guess correctly! Party is finished.');
+        // }
+        // else {
+        //   alert('You did not guess correctly!');
+        // }
       }
     });
 
@@ -270,11 +320,16 @@ Template.activegame.events({
 
     return false;
   },
-  'click #next-turn': function(e) {
+  'click .next-turn': function(e) {
     e.preventDefault();
     $('#notification-modal').modal('hide')
     let id = e.target.getAttribute('data-id');
     Meteor.call('game.nextTurn', {id});
+    return false;
+  },
+  'click #close': function(e) {
+    e.preventDefault();
+    $('#solution-guessed-modal').modal('hide');
     return false;
   }
 });

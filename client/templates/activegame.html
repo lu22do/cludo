@@ -86,7 +86,7 @@
               <hr>
 
               {{#if myTurn}}
-              <a class="btn btn-default" href="" id="next-turn" data-id="{{gameId}}">Next turn</a>
+              <a class="btn btn-default next-turn" href="" id="" data-id="{{gameId}}">Next turn</a>
               {{/if}}
             {{/if}}
 
@@ -97,6 +97,66 @@
       </div>
     </div>
   </div>
+
+  <div class="modal fade" id="solution-guessed-modal" tabindex="-1" role="dialog" data-backdrop="static">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Guessing the solution (turn #{{game.turn}})</h4>
+        </div>
+
+        <div class="modal-body">
+          {{#if winner}}
+
+            {{#if curPlayerWon}}
+
+              {{curPlayerName}} guessed the following solution and <span style="color: red">won!!!</span>
+              <ul>
+                {{#each guessedCardSet}}
+                <li>{{this}}</li>
+                {{/each}}
+              </ul>
+
+            {{else}}
+
+              {{curPlayerName}} guessed a solution but failed.
+              <br />
+
+              {{#if youAreTheWinner}}
+                You are the last active player and therefore <span style="color: red">won!!!</span>
+              {{else}}
+                {{winner}} is the last active player therefore won!
+              {{/if}}
+
+            {{/if}}
+
+            <br /><br />
+            The game is finished.
+
+            <hr>
+            <a class="btn btn-default" href="" id="close">Close</a>
+
+          {{else}}
+
+            {{curPlayerName}} guessed a solution but failed.
+            <br />
+            <br />
+
+            The game continues.
+
+            {{#if myTurn}}
+            <hr>
+            <a class="btn btn-default next-turn" href="" id="" data-id="{{gameId}}">Next turn</a>
+            {{/if}}
+
+          {{/if}}
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
 
 </template>
 

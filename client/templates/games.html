@@ -70,7 +70,9 @@
             {{#if startable}}
               <a id="start-game" data-id="{{id}}" href="">Start</a>
             {{/if}}
+            {{#if notStarted}}
             <a href="/editgame/{{id}}">Edit</a>
+            {{/if}}
             <a id="delete-game" data-id="{{id}}" href="">Delete</a>
           {{/if}}
         </td>
