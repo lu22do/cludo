@@ -1,5 +1,5 @@
 {
-  "name": "cluedo_meteor",
+  "name": "cludo",
   "private": true,
   "scripts": {
     "start": "meteor run"
