@@ -18,8 +18,8 @@
       <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
         <ul class="nav navbar-nav">
           <li class="{{gamesactive}}"><a href="/games"><span class="glyphicon glyphicon-th-list"></span> Games</a></li>
-          {{#if isAdmin}}
           <li class="{{newgameactive}}"><a href="/newgame"><span class="glyphicon glyphicon-plus"></span> Start a new game</a></li>
+          {{#if isAdmin}}
           <li class="{{usersactive}}"><a href="/users"><span class="glyphicon glyphicon-user"></span> Users</a></li>
           {{/if}}
         </ul>

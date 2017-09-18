@@ -24,7 +24,8 @@ Template.games.helpers({
               rules: Rules[game.rules],
               id: game._id,
               players: players,
-              state: game.finished? 'Finished': game.started? 'On-going': 'Not started',
+              state: game.finished? 'Finished (winner: ' + Meteor.users.findOne(game.winner).username + ')':
+                     game.started? 'On-going (turn: ' + game.turn + ')': 'Not started',
               ownername: owner ? owner.username : 'unknown',
               canJoin: !game.started && !alreadyJoined,
               started: game.started && !game.finished,
@@ -90,7 +91,15 @@ Template.games.events({
 
 Template.newgame.helpers({
   possibleRules: function() {
-    return Rules;
+    let possibleRules = [];
+    Rules.forEach(function (rules, index) {
+      possibleRules.push(Rules[index] + ' (' + SuspectCards[index].length + ' Suspect Cards, '
+                                            + RoomCards[index].length + ' Room Cards, '
+                                            + TimeCards[index].length + ' Time Cards, '
+                                            + WeaponCards[index].length + ' Weapon Cards'
+                                            + ')');
+    });
+    return possibleRules;
   }
 });
 
