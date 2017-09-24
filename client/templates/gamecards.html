@@ -1,0 +1,19 @@
+<template name="gamecards">
+  <div class="container">
+    <h3>"{{game.name}}" game's list of cards</h3>
+
+    <ul>
+      {{#each categories}}
+      <li>{{name}}
+        <ul>
+          {{#each cards}}
+          <li>{{this}}</li>
+          {{/each}}
+        </ul>
+      </li>
+      {{/each}}
+    </ul>
+
+  </div>
+
+</template>

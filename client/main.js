@@ -39,5 +39,12 @@ Router.map(function(){
     });
   });
 
+  this.route('/gamecards/:_id', function () {
+    this.render('gamecards', {
+      data: {
+        gameId: this.params._id
+      }
+    });
+  });
 
 });

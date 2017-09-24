@@ -61,20 +61,21 @@
         <td>{{ownername}}</td>
         <td>
           {{#if canJoin}}
-            <a id="join-game" data-id="{{id}}" href="">Join</a>
+            <a class="btn btn-default" id="join-game" data-id="{{id}}" href="">Join</a>
           {{/if}}
           {{#if started}}
-            <a href="/activegame/{{id}}">Open</a>
+            <a class="btn btn-default" href="/activegame/{{id}}">Open</a>
           {{/if}}
           {{#if isMygame}}
             {{#if startable}}
-              <a id="start-game" data-id="{{id}}" href="">Start</a>
+              <a class="btn btn-default" id="start-game" data-id="{{id}}" href="">Start</a>
             {{/if}}
             {{#if notStarted}}
-            <a href="/editgame/{{id}}">Edit</a>
+            <a class="btn btn-default" href="/editgame/{{id}}">Edit</a>
             {{/if}}
-            <a id="delete-game" data-id="{{id}}" href="">Delete</a>
+            <a class="btn btn-default" id="delete-game" data-id="{{id}}" href="">Delete</a>
           {{/if}}
+          <a class="btn btn-default" href="/gamecards/{{id}}">Card list</a>
         </td>
       </tr>
       {{/each}}
