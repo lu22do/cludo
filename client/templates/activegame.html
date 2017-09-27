@@ -25,7 +25,7 @@
     </ul>
     {{/if}}
 
-    <hr />
+    <br>
 
     {{#if myTurn}}
     <button type="button" class="btn btn-default" data-toggle="modal" data-target="#ask-player-modal">
@@ -36,6 +36,24 @@
        Guess the solution
     </button>
     {{/if}}
+
+    <!-- log / last activity -->
+    {{#if admin}}
+      <br>
+      <h3>Logs</h3>
+      <div id="logs" style="overflow-y: scroll; height:80px;">
+        {{#each logs}}
+          {{index}}{{text}}<br />
+        {{/each}}
+      </div>
+    {{else}}
+      <br>
+      <h3>Last Activity</h3>
+      <div class="capitalized">{{lastLog}}</div>
+    {{/if}}
+
+    <br>
+    <br>
   </div>
 
   {{> modal cards=cards title="Ask a player" id="ask-player-modal" gameId=gameId otherplayers=otherplayers}}
@@ -48,7 +66,7 @@
           <h4 class="modal-title">Player request</h4>
         </div>
 
-        <div class="modal-body">
+        <div class="modal-body capitalized">
           {{curPlayerName}} asked {{askedPlayerName}} for:
           <ul>
             {{#each askedCardSet}}
@@ -80,7 +98,7 @@
             {{#if answerReceived}}
 
               <hr>
-              <div>
+              <div class="capitalized">
                 {{askedPlayerName}} answered to {{curPlayerName}} with {{answer}} card.
               </div>
               <hr>
@@ -105,7 +123,7 @@
           <h4 class="modal-title">Guessing the solution (turn #{{game.turn}})</h4>
         </div>
 
-        <div class="modal-body">
+        <div class="modal-body capitalized">
           {{#if winner}}
 
             {{#if curPlayerWon}}
@@ -156,7 +174,6 @@
       </div>
     </div>
   </div>
-
 
 </template>
 

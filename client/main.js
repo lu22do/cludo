@@ -1,5 +1,6 @@
 Meteor.subscribe('games');
 Meteor.subscribe('userData');
+Meteor.subscribe('game-details');
 
 Router.map(function(){
   this.onBeforeAction(function () {

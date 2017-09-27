@@ -1,19 +1,16 @@
-// call everytime someone subscribes (or unsubscribes (logout))
+// called everytime someone subscribes (or unsubscribes (logout))
 Meteor.publish("games", function () {
+  //console.log('publishing games');
   return Games.find();
+});
 
-/* ---> to return only game owned by user:
+Meteor.publish("game-details", function () {
   var user = Meteor.users.findOne(this.userId);
 
-  if (user) {
-		if (user.username === 'admin') {
-		  return Games.find();
-		}
-		else {
-		  return Games.find({owner: this.userId});
-		}
+  if (user && user.username === 'admin') {
+    //console.log('publishing game details to admin')
+    return GameDetails.find();
   }
-*/
 });
 
 Games.allow({
@@ -68,6 +65,7 @@ Meteor.users.allow({
   remove: function (userId, doc) {
     var currentUser = Meteor.user();
 
+    // only admin can delete users
 		return currentUser && currentUser.username === 'admin';
   }
 });

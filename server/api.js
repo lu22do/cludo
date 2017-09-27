@@ -203,8 +203,18 @@ Meteor.methods({
                              'Wrong state to answer - ' + game.state);
     }
 
+    let logEntry = {
+      playerId: game.players[game.curPlayer],
+      action: ACTION_ASKED_PLAYER,
+      askedPlayerId: game.curAskedPlayer,
+      askedCardSet: game.curAskedCardSet,
+      answer: args.card
+    };
+
     GameDetails.update(game.gameDetails,
-                       { '$set': { 'lastAnswer': args.card } },
+                       { '$set': { 'lastAnswer': args.card },
+                         '$push': { 'logs': logEntry },
+                       },
                        function(err) {
       if (err) {
         throw err;
@@ -278,6 +288,14 @@ Meteor.methods({
                                                                    }
                                      );
                        });
+  },
+  'game.getLastLog'(args) {
+    console.log('game.getLastLog');
+
+    let game = Games.findOne(args.id);
+    let gameDetails = GameDetails.findOne(game.gameDetails);
+
+    return gameDetails.logs[gameDetails.logs.length - 1];
   },
   'game.guessSolution'(args) {
     console.log('game.guessSolution gameId=' + args.id + ' user=' + Meteor.users.findOne(this.userId).username);

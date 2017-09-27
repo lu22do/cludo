@@ -16,3 +16,7 @@
 .retiredPlayer:after {
   content: ' (lost)';
 }
+
+.capitalized:first-letter {
+  text-transform: capitalize;
+}

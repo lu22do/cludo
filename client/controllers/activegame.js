@@ -23,13 +23,15 @@ Template.activegame.onCreated(function() {
         $('#solution-guessed-modal').modal('hide');
       }
 
+      Meteor.call('game.getLastLog', {id: Blaze.getData().gameId}, function(err, result) {
+        Session.set('lastLog', result);
+      });
     }
   });
 
   Meteor.call('game.getCards', Blaze.getData().gameId, function(err, result) {
     Session.set('myCards', result);
   });
-
 });
 
 Template.activegame.onRendered(() => {
@@ -46,6 +48,31 @@ function hasCard(type, index) {
   return false;
 }
 
+function getUserName(playerId) {
+  if (playerId === Meteor.userId()) {
+    return "you";
+  }
+  else {
+    let player = Meteor.users.findOne(playerId);
+    return player? player.username: 'unknown';
+  }
+}
+
+function displayLog(game, log) {
+  let askedCardSet = '{' +
+                 SuspectCards[game.rules][log.askedCardSet.suspectIndex] + ', ' +
+                 RoomCards[game.rules][log.askedCardSet.roomIndex] + ', ' +
+                 TimeCards[game.rules][log.askedCardSet.timeIndex] + ', ' +
+                 WeaponCards[game.rules][log.askedCardSet.weaponIndex] + '}';
+  let answer = log.answer? '\'' + AllCards[game.rules][log.answer.type][log.answer.index] + '\'':
+               'nothing';
+
+  return getUserName(log.playerId) + ' asked ' +
+         getUserName(log.askedPlayerId) + ' for ' +
+         askedCardSet + ' and got ' +
+         AllCards[game.rules][log.answer.type][log.answer.index] + ' as answer.';
+}
+
 Template.activegame.helpers({
   game: function() {
     return Games.findOne(this.gameId);
@@ -55,12 +82,7 @@ Template.activegame.helpers({
     if (game) {
       let players = [];
       game.players.forEach(function(playerId, index) {
-        if (playerId === Meteor.userId()) {
-          players.push({name: 'You'});
-        }
-        else {
-          players.push({name: Meteor.users.findOne(playerId).username});
-        }
+        players.push({name: getUserName(playerId)});
         if (index === game.curPlayer) {
           players[players.length-1].style = 'currentPlayer';
         }
@@ -85,24 +107,13 @@ Template.activegame.helpers({
   curPlayerName: function() {
     let game = Games.findOne(this.gameId);
     if (game) {
-      let playerId = game.players[game.curPlayer];
-      if (playerId === Meteor.userId()) {
-        return "You";
-      }
-      else {
-        return Meteor.users.findOne(playerId).username;
-      }
+      return getUserName(game.players[game.curPlayer]);
     }
   },
   askedPlayerName: function() {
     let game = Games.findOne(this.gameId);
     if (game && game.curAskedPlayer) {
-      if (game.curAskedPlayer === Meteor.userId()) {
-        return "you";
-      }
-      else {
-        return Meteor.users.findOne(game.curAskedPlayer).username;
-      }
+      return getUserName(game.curAskedPlayer);
     }
   },
   askedPlayerIsYou: function() {
@@ -182,11 +193,12 @@ Template.activegame.helpers({
       let players = [];
       game.players.forEach((playerId) => {
         if (playerId !== Meteor.userId()) {
+          let player = Meteor.users.findOne(playerId)
           players.push({id: playerId,
-            name: Meteor.users.findOne(playerId).username});
-          }
-        });
-        return players;
+                        name: player? player.username: 'unknown'});
+        }
+      });
+      return players;
     }
   },
   remainingCards: function() {
@@ -237,6 +249,35 @@ Template.activegame.helpers({
     let game = Games.findOne(this.gameId);
     if (game && game.winner && game.winner === Meteor.userId()) {
       return true;
+    }
+  },
+  admin: function() {
+    let user = Meteor.user();
+    if (user && user.username === 'admin') {
+      return true;
+    }
+  },
+  logs: function() {
+    let game = Games.findOne(this.gameId);
+    if (game) {
+      let gameDetails = GameDetails.findOne(game.gameDetails);
+      if (gameDetails) {
+        let displayableLogs = [];
+        gameDetails.logs.forEach(function(log, index) {
+          displayableLogs.unshift({ index: '[' + index + '] ',
+                                    text: displayLog(game, log) });
+        });
+        return displayableLogs;
+      }
+    }
+  },
+  lastLog: function() {
+    let game = Games.findOne(this.gameId);
+    if (game) {
+      let lastLog = Session.get('lastLog');
+      if (lastLog) {
+        return displayLog(game, lastLog);
+      }
     }
   },
 });
