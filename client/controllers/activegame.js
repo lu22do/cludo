@@ -3,6 +3,15 @@ Template.activegame.onCreated(function() {
     let gameId = Blaze.getData().gameId;
     let game = Games.findOne(Blaze.getData().gameId);
     if (game) {
+      let sound = new buzz.sound('/bell.mp3');
+
+      let activePlayerId = game.players[game.curPlayer];
+      let thisUser = Meteor.userId();
+      if (activePlayerId !== thisUser && game.players.indexOf(thisUser) >= 0) {
+        // play a sound when another player did something (+ exclude observers)
+        sound.play();
+      }
+
       if (game.state == STATE_WAITING_ANSWER ||
           game.state == STATE_ANSWER_RECEIVED) {
         $('#notification-modal').modal('show');
