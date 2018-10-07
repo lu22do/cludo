@@ -64,13 +64,13 @@ function displayLog(game, log) {
                  RoomCards[game.rules][log.askedCardSet.roomIndex] + ', ' +
                  TimeCards[game.rules][log.askedCardSet.timeIndex] + ', ' +
                  WeaponCards[game.rules][log.askedCardSet.weaponIndex] + '}';
-  let answer = log.answer? '\'' + AllCards[game.rules][log.answer.type][log.answer.index] + '\'':
-               'nothing';
+  let card = log.answer.type === CARD_TYPE_NONE ? 'no card' :
+    AllCards[game.rules][log.answer.type][log.answer.index];
 
   return getUserName(log.playerId) + ' asked ' +
          getUserName(log.askedPlayerId) + ' for ' +
          askedCardSet + ' and got ' +
-         AllCards[game.rules][log.answer.type][log.answer.index] + ' as answer.';
+         card + ' as answer.';
 }
 
 Template.activegame.helpers({

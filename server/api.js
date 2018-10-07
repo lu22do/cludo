@@ -185,13 +185,33 @@ Meteor.methods({
     let gameDetails = GameDetails.findOne(game.gameDetails);
 
     let nextState = STATE_WAITING_ANSWER;
-    if (!playerHasAtLeastOneCard(game, gameDetails, findPlayer(game, args.playerId), args.cardSet)) {
-      nextState = STATE_ANSWER_RECEIVED;
-    }
 
-    Games.update(args.id, { '$set': { 'curAskedPlayer': args.playerId,
-                                      'curAskedCardSet': args.cardSet,
-                                      'state': nextState } });
+    if (!playerHasAtLeastOneCard(game, gameDetails, findPlayer(game, args.playerId), args.cardSet)) {
+      let logEntry = {
+        playerId: game.players[game.curPlayer],
+        action: ACTION_ASKED_PLAYER,
+        askedPlayerId: args.playerId,
+        askedCardSet: args.cardSet,
+        answer: {type: CARD_TYPE_NONE, index: -1}
+      };
+
+      GameDetails.update(game.gameDetails,
+                         { '$push': { 'logs': logEntry } },
+                         function(err) {
+        if (err) {
+          throw err;
+        }
+
+        Games.update(args.id, { '$set': { 'curAskedPlayer': args.playerId,
+                                          'curAskedCardSet': args.cardSet,
+                                          'state': STATE_ANSWER_RECEIVED } });
+      });
+    }
+    else {
+      Games.update(args.id, { '$set': { 'curAskedPlayer': args.playerId,
+                                        'curAskedCardSet': args.cardSet,
+                                        'state': STATE_WAITING_ANSWER } });
+    }
   },
   'game.answer'(args) {
     console.log('game.answer gameId=' + args.id + ' user=' + Meteor.users.findOne(this.userId).username);
