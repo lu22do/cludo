@@ -73,8 +73,22 @@ function displayLog(game, log) {
                  RoomCards[game.rules][log.askedCardSet.roomIndex] + ', ' +
                  TimeCards[game.rules][log.askedCardSet.timeIndex] + ', ' +
                  WeaponCards[game.rules][log.askedCardSet.weaponIndex] + '}';
-  let card = log.answer.type === CARD_TYPE_NONE ? 'no card' :
-    AllCards[game.rules][log.answer.type][log.answer.index];
+  let card;
+  let user = Meteor.user();
+  let isAdmin = false;
+  if (user && user.username === 'admin') {
+    isAdmin = true;
+  }
+
+  if (log.answer.type === CARD_TYPE_NONE) {
+    card = 'no card';
+  }
+  else if (isAdmin || Meteor.userId() === log.playerId || Meteor.userId() === log.askedPlayerId) {
+    card = AllCards[game.rules][log.answer.type][log.answer.index];
+  }
+  else {
+    card = 'a card';
+  }
 
   return getUserName(log.playerId) + ' asked ' +
          getUserName(log.askedPlayerId) + ' for ' +
