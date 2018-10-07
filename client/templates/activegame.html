@@ -2,177 +2,184 @@
   <div class="container">
     <h3>"{{game.name}}" Game (turn #{{game.turn}})</h3>
     <hr />
-    <h3>Player's turn:</h3>
-    <ol>
-      {{#each players}}
-      <li class="{{style}}">{{name}}</li>
-      {{/each}}
-    </ol>
-
-    <h3>Your cards:</h3>
-    <ul>
-      {{#each playerCards}}
-      <li>{{category}}: {{name}}</li>
-      {{/each}}
-    </ul>
-
-    {{#if remainingCards}}
-    <h3>Remaining card(s):</h3>
-    <ul>
-      {{#each remainingCards}}
-      <li>{{category}}: {{name}}</li>
-      {{/each}}
-    </ul>
-    {{/if}}
-
-    <br>
-
-    {{#if myTurn}}
-    <button type="button" class="btn btn-default" data-toggle="modal" data-target="#ask-player-modal">
-       Ask a player
-    </button>
-
-    <button type="button" class="btn btn-default" data-toggle="modal" data-target="#guess-solution-modal">
-       Guess the solution
-    </button>
-    {{/if}}
-
-    <!-- log / last activity -->
-    {{#if admin}}
-      <br>
-      <h3>Logs</h3>
-      <div id="logs" style="overflow-y: scroll; height:80px;">
-        {{#each logs}}
-          {{index}}{{text}}<br />
+    <div class="col-md-7">
+      <h3>Player's turn:</h3>
+      <ol>
+        {{#each players}}
+        <li class="{{style}}">{{name}}</li>
         {{/each}}
-      </div>
-    {{else}}
+      </ol>
+
+      <h3>Your cards:</h3>
+      <ul>
+        {{#each playerCards}}
+        <li>{{category}}: {{name}}</li>
+        {{/each}}
+      </ul>
+
+      {{#if remainingCards}}
+      <h3>Remaining card(s):</h3>
+      <ul>
+        {{#each remainingCards}}
+        <li>{{category}}: {{name}}</li>
+        {{/each}}
+      </ul>
+      {{/if}}
+
       <br>
-      <h3>Last Activity</h3>
-      <div class="capitalized">{{lastLog}}</div>
-    {{/if}}
 
-    <br>
-    <br>
-  </div>
+      {{#if myTurn}}
+      <button type="button" class="btn btn-default" data-toggle="modal" data-target="#ask-player-modal">
+         Ask a player
+      </button>
 
-  {{> modal cards=cards title="Ask a player" id="ask-player-modal" gameId=gameId otherplayers=otherplayers}}
-  {{> modal cards=cards title="Guess the solution" id="guess-solution-modal" gameId=gameId}}
+      <button type="button" class="btn btn-default" data-toggle="modal" data-target="#guess-solution-modal">
+         Guess the solution
+      </button>
+      {{/if}}
 
-  <div class="modal fade" id="notification-modal" tabindex="-1" role="dialog" data-backdrop="static">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title">Player request</h4>
+      <!-- log / last activity -->
+      {{#if admin}}
+        <br>
+        <h3>Logs</h3>
+        <div id="logs" style="overflow-y: scroll; height:80px;">
+          {{#each logs}}
+            {{index}}{{text}}<br />
+          {{/each}}
         </div>
+      {{else}}
+        <br>
+        <h3>Last Activity</h3>
+        <div class="capitalized">{{lastLog}}</div>
+      {{/if}}
 
-        <div class="modal-body capitalized">
-          {{curPlayerName}} asked {{askedPlayerName}} for:
-          <ul>
-            {{#each askedCardSet}}
-            <li>{{this}}</li>
-            {{/each}}
-          </ul>
+      <br>
+      <br>
+    </div>
 
-          {{#if waitingForAnswer}}
+    {{> modal cards=cards title="Ask a player" id="ask-player-modal" gameId=gameId otherplayers=otherplayers}}
+    {{> modal cards=cards title="Guess the solution" id="guess-solution-modal" gameId=gameId}}
 
-            {{#if askedPlayerIsYou}}
-            <form id="{{id}}-form" action="action" data-id="{{gameId}}">
-              {{#if possibleCardsToAnswer}}
-              {{> select what="answer" items=possibleCardsToAnswer}}
+    <div class="modal fade" id="notification-modal" tabindex="-1" role="dialog" data-backdrop="static">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Player request</h4>
+          </div>
+
+          <div class="modal-body capitalized">
+            {{curPlayerName}} asked {{askedPlayerName}} for:
+            <ul>
+              {{#each askedCardSet}}
+              <li>{{this}}</li>
+              {{/each}}
+            </ul>
+
+            {{#if waitingForAnswer}}
+
+              {{#if askedPlayerIsYou}}
+              <form id="{{id}}-form" action="action" data-id="{{gameId}}">
+                {{#if possibleCardsToAnswer}}
+                {{> select what="answer" items=possibleCardsToAnswer}}
+                {{/if}}
+
+                <div class="modal-footer">
+                  <input class="btn btn-default" type="submit" id="answer-button" value="Answer" />
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+              {{else}}
+              <hr>
+              <div>
+                Waiting for answer...
+              </div>
               {{/if}}
 
-              <div class="modal-footer">
-                <input class="btn btn-default" type="submit" id="answer-button" value="Answer" />
-                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-              </div>
-            </form>
             {{else}}
-            <hr>
-            <div>
-              Waiting for answer...
-            </div>
-            {{/if}}
+              {{#if answerReceived}}
 
-          {{else}}
-            {{#if answerReceived}}
+                <hr>
+                <div class="capitalized">
+                  {{askedPlayerName}} answered to {{curPlayerName}} with {{answer}} card.
+                </div>
+                <hr>
 
-              <hr>
-              <div class="capitalized">
-                {{askedPlayerName}} answered to {{curPlayerName}} with {{answer}} card.
-              </div>
-              <hr>
-
-              {{#if myTurn}}
-              <a class="btn btn-default next-turn" href="" id="" data-id="{{gameId}}">Next turn</a>
+                {{#if myTurn}}
+                <a class="btn btn-default next-turn" href="" id="" data-id="{{gameId}}">Next turn</a>
+                {{/if}}
               {{/if}}
+
             {{/if}}
 
-          {{/if}}
+          </div>
 
         </div>
-
       </div>
     </div>
-  </div>
 
-  <div class="modal fade" id="solution-guessed-modal" tabindex="-1" role="dialog" data-backdrop="static">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title">Guessing the solution (turn #{{game.turn}})</h4>
-        </div>
+    <div class="modal fade" id="solution-guessed-modal" tabindex="-1" role="dialog" data-backdrop="static">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Guessing the solution (turn #{{game.turn}})</h4>
+          </div>
 
-        <div class="modal-body capitalized">
-          {{#if winner}}
+          <div class="modal-body capitalized">
+            {{#if winner}}
 
-            {{#if curPlayerWon}}
+              {{#if curPlayerWon}}
 
-              {{curPlayerName}} guessed the following solution and <span style="color: red">won!!!</span>
-              <ul>
-                {{#each guessedCardSet}}
-                <li>{{this}}</li>
-                {{/each}}
-              </ul>
+                {{curPlayerName}} guessed the following solution and <span style="color: red">won!!!</span>
+                <ul>
+                  {{#each guessedCardSet}}
+                  <li>{{this}}</li>
+                  {{/each}}
+                </ul>
+
+              {{else}}
+
+                {{curPlayerName}} guessed a solution but failed.
+                <br />
+
+                {{#if youAreTheWinner}}
+                  You are the last active player and therefore <span style="color: red">won!!!</span>
+                {{else}}
+                  {{winner}} is the last active player therefore won!
+                {{/if}}
+
+              {{/if}}
+
+              <br /><br />
+              The game is finished.
+
+              <hr>
+              <a class="btn btn-default" href="" id="close">Close</a>
 
             {{else}}
 
               {{curPlayerName}} guessed a solution but failed.
               <br />
+              <br />
 
-              {{#if youAreTheWinner}}
-                You are the last active player and therefore <span style="color: red">won!!!</span>
-              {{else}}
-                {{winner}} is the last active player therefore won!
+              The game continues.
+
+              {{#if myTurn}}
+              <hr>
+              <a class="btn btn-default next-turn" href="" id="" data-id="{{gameId}}">Next turn</a>
               {{/if}}
 
             {{/if}}
 
-            <br /><br />
-            The game is finished.
-
-            <hr>
-            <a class="btn btn-default" href="" id="close">Close</a>
-
-          {{else}}
-
-            {{curPlayerName}} guessed a solution but failed.
-            <br />
-            <br />
-
-            The game continues.
-
-            {{#if myTurn}}
-            <hr>
-            <a class="btn btn-default next-turn" href="" id="" data-id="{{gameId}}">Next turn</a>
-            {{/if}}
-
-          {{/if}}
+          </div>
 
         </div>
-
       </div>
     </div>
+
+    <div class="col-md-5">
+      {{> cardtable}}
+    </div>
+
   </div>
 
 </template>

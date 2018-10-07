@@ -1,0 +1,24 @@
+<template name="cardtable">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Card</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each cardsByCategory}}
+        <tr>
+          <td colspan="3" style="background-color: #EEE"><b>{{name}}</b></td>
+        </tr>
+
+        {{#each cards}}
+        <tr>
+          <td>{{this}}</td>
+          <td><textarea rows="1" style="width: 100%"></textarea></td>
+        </tr>
+        {{/each}}
+        {{/each}}
+      </tbody>
+    </table>
+</template>
